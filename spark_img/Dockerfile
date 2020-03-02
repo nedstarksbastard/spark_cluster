@@ -18,7 +18,7 @@ RUN tar -xzf hadoop-2.7.7.tar.gz && \
 RUN echo "export JAVA_HOME=/usr/lib/jvm/java-1.8-openjdk/jre/" >> hadoop/etc/hadoop/hadoop-env.sh
 
 # add to PATH
-ENV PATH $PATH:hadoop/bin:spark/bin:spark/sbin
+ENV PATH $PATH:/hadoop/bin:/spark/bin:/spark/sbin
 
 # copy configuration files
 COPY ./conf/core-site.xml ./hadoop/etc/hadoop
@@ -44,7 +44,12 @@ RUN apk add --no-cache --update \
     musl \
     libc6-compat \
     linux-headers \
-    build-base
+    build-base \
+    procps \
+    openssh \
+    openrc
+
+RUN rc-update add sshd
 
 # Set Python version
 ARG PYTHON_VERSION='3.7.6'

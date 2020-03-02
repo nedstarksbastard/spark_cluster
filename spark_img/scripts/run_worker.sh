@@ -1,5 +1,8 @@
 #!/bin/sh
 
+echo "Initializing SSH"
+sudo service ssh start
+
 echo "Starting nodemanager"
 /hadoop/sbin/yarn-daemon.sh start nodemanager &
 
