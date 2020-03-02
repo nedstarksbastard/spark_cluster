@@ -4,30 +4,33 @@ RUN apk --update add wget tar bash
 
 # Get tars of spark and hadoop
 RUN wget http://apache.mirror.anlx.net/spark/spark-2.4.5/spark-2.4.5-bin-hadoop2.7.tgz
-
 RUN wget http://archive.apache.org/dist/hadoop/common/hadoop-2.7.7/hadoop-2.7.7.tar.gz
-
-ARG SPARK_HOME='/spark'
-
-ARG HADOOP_HOME='/hadoop'
 
 # Install spark
 RUN tar -xzf spark-2.4.5-bin-hadoop2.7.tgz && \
-    mv spark-2.4.5-bin-hadoop2.7 /${SPARK_HOME} && \
+    mv spark-2.4.5-bin-hadoop2.7 /spark && \
     rm spark-2.4.5-bin-hadoop2.7.tgz
 
 # Install hadoop
 RUN tar -xzf hadoop-2.7.7.tar.gz && \
-    mv hadoop-2.7.7 /${HADOOP_HOME} && \
+    mv hadoop-2.7.7 /hadoop && \
     rm hadoop-2.7.7.tar.gz
-RUN echo "export JAVA_HOME=/usr/lib/jvm/java-1.8-openjdk/jre/" >> $HADOOP_HOME/etc/hadoop/hadoop-env.sh
+RUN echo "export JAVA_HOME=/usr/lib/jvm/java-1.8-openjdk/jre/" >> hadoop/etc/hadoop/hadoop-env.sh
 
-ENV PATH $PATH:${HADOOP_HOME}/bin:${SPARK_HOME}/bin:${SPARK_HOME}/sbin
+# add to PATH
+ENV PATH $PATH:hadoop/bin:spark/bin:spark/sbin
+
+# copy configuration files
+COPY ./conf/core-site.xml ./hadoop/etc/hadoop
+COPY ./conf/yarn-site.xml ./hadoop/etc/hadoop
+COPY ./conf/spark-defaults.conf ./spark/conf
+
+# format the meta-data related to data-nodes - https://stackoverflow.com/questions/27143409/what-the-command-hadoop-namenode-format-will-do
+RUN hadoop/bin/hdfs namenode -format
 
 # Copy scripts for running spark master and slave
-COPY run_master.sh /run_master.sh
-
-COPY run_worker.sh /run_worker.sh
+COPY scripts/run_master.sh /run_master.sh
+COPY scripts/run_worker.sh /run_worker.sh
 
 # Install components for Python
 RUN apk add --no-cache --update \
@@ -60,3 +63,6 @@ RUN pip install --upgrade pip && pyenv rehash
 
 # Clean
 RUN rm -rf ~/.cache/pip
+
+RUN chmod +x /run_master.sh
+RUN chmod +x /run_worker.sh
