@@ -1,7 +1,8 @@
 #!/bin/sh
 
 echo "Initializing SSH"
-sudo service ssh start
+# quirk of alpine image. Using init.d service call does not work
+/usr/sbin/sshd -e "$@" &
 
 echo "Starting nodemanager"
 /hadoop/sbin/yarn-daemon.sh start nodemanager &

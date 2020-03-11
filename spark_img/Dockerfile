@@ -1,6 +1,11 @@
 FROM openjdk:8-alpine
 
-RUN apk --update add wget tar bash
+USER root
+
+# Getting coreutils to use no-hup to start spark daemons later on.
+# Don't have to but makes life easier.
+# wget, tar, bash for getting spark and hadoopFizi
+RUN apk --update add coreutils wget tar bash
 
 # Get tars of spark and hadoop
 RUN wget http://apache.mirror.anlx.net/spark/spark-2.4.5/spark-2.4.5-bin-hadoop2.7.tgz
@@ -15,10 +20,14 @@ RUN tar -xzf spark-2.4.5-bin-hadoop2.7.tgz && \
 RUN tar -xzf hadoop-2.7.7.tar.gz && \
     mv hadoop-2.7.7 /hadoop && \
     rm hadoop-2.7.7.tar.gz
-RUN echo "export JAVA_HOME=/usr/lib/jvm/java-1.8-openjdk/jre/" >> hadoop/etc/hadoop/hadoop-env.sh
+RUN echo "export JAVA_HOME=/usr/lib/jvm/java-1.8-openjdk/jre/" >> /hadoop/etc/hadoop/hadoop-env.sh
 
 # add to PATH
 ENV PATH $PATH:/hadoop/bin:/spark/bin:/spark/sbin
+
+ENV HADOOP_HOME /hadoop
+ENV HADOOP_CONF_DIR=/hadoop/etc/hadoop
+ENV SPARK_HOME /spark
 
 # copy configuration files
 COPY ./conf/core-site.xml ./hadoop/etc/hadoop
@@ -51,6 +60,9 @@ RUN apk add --no-cache --update \
 
 RUN rc-update add sshd
 
+RUN sed -i s/#PermitRootLogin.*/PermitRootLogin\ yes/ /etc/ssh/sshd_config && \
+    echo "root:root" | chpasswd
+
 # Set Python version
 ARG PYTHON_VERSION='3.7.6'
 # Set pyenv home
@@ -71,3 +83,22 @@ RUN rm -rf ~/.cache/pip
 
 RUN chmod +x /run_master.sh
 RUN chmod +x /run_worker.sh
+
+
+# Create SSH key for passwordless access
+RUN ssh-keygen -t rsa -P '' -f ~/.ssh/id_rsa
+RUN cat ~/.ssh/id_rsa.pub >> ~/.ssh/authorized_keys
+RUN chmod 0600 ~/.ssh/authorized_keys
+RUN ssh-keygen -A
+
+# node manager ports
+EXPOSE 8040
+EXPOSE 8042
+EXPOSE 22
+EXPOSE 8030
+EXPOSE 8031
+EXPOSE 8032
+EXPOSE 8033
+EXPOSE 8088
+EXPOSE 10020
+EXPOSE 19888

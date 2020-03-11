@@ -1,4 +1,4 @@
-version: "3"
+version: "3.5"
 services:
   spark-master:
     image: fiziy/spark:latest
@@ -10,7 +10,8 @@ services:
       - "4040:4040"
       - "18080:18080"
     networks:
-      - spark-network
+      spark-network:
+        ipv4_address: 172.18.0.20
     environment:
       - "SPARK_LOCAL_IP=spark-master"
       - "SPARK_MASTER_PORT=7077"
@@ -21,9 +22,11 @@ services:
     depends_on:
       - spark-master
     ports:
-      - 8080
+      - "7177"
     networks:
       - spark-network
+    extra_hosts:
+      - "spark-master:172.18.0.20"
     environment:
       - "SPARK_MASTER=spark://spark-master:7077"
       - "SPARK_WORKER_WEBUI_PORT=8080"
@@ -31,5 +34,8 @@ services:
 networks:
   spark-network:
     driver: bridge
+    name: spark-network
     ipam:
       driver: default
+      config:
+        - subnet: 172.18.0.0/16
