@@ -47,6 +47,7 @@ RUN apk add --no-cache --update \
     linux-headers \
     build-base \
     procps \
+    ca-certificates\
     openssh \
     openrc
 
@@ -65,8 +66,8 @@ ENV PATH $PYENV_HOME/shims:$PYENV_HOME/bin:$PATH
 
 RUN pyenv install $PYTHON_VERSION
 RUN pyenv global $PYTHON_VERSION
-RUN pip install --upgrade --trusted-host pypi.org --trusted-host files.pythonhosted.org pip setuptools && pyenv rehash
-RUN pip install --trusted-host pypi.org --trusted-host files.pythonhosted.org pyspark pandas numpy
+RUN pip install --upgrade pip setuptools wheel && pyenv rehash
+RUN pip install pyspark
 # Clean
 RUN rm -rf ~/.cache/pip
 
@@ -93,13 +94,9 @@ RUN ssh-keygen -t rsa -P '' -f ~/.ssh/id_rsa && \
 RUN ssh-keygen -A
 
 # node manager ports
-EXPOSE 8040
-EXPOSE 8042
+
 EXPOSE 22
-EXPOSE 8030
-EXPOSE 8031
-EXPOSE 8032
-EXPOSE 8033
-EXPOSE 8088
-EXPOSE 10020
-EXPOSE 19888
+EXPOSE 50010 50020 50070 50075 50090 8020 9000
+EXPOSE 10020 19888
+EXPOSE 8030 8031 8032 8033 8040 8042 8088
+EXPOSE 49707 2122 7001 7002 7003 7004 7005 7006 7007 8888 9000
